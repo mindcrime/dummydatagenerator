@@ -1,0 +1,11 @@
+All 3rd party dependent jars (see /lib directory) are licensed under their
+respective license.  
+
+All original code (see /src directory) is (c) 2010 Fogbeam Labs
+and is released under your choice of the Apache Sofware License V2.0, The GNU LGPL v2 or 
+later, or the GNU GPL v2 or later.
+
+If you want to reuse this code and one of those licenses isn't suitable for your purposes, contact
+us to request other terms.
+
+  
