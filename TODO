@@ -1,0 +1,19 @@
+Enhancements that would be nice.  Some are already planned, others
+might or might not ever happen.  
+
+(in no particular order)
+
+1. Output "social graph" links (eg, "Joe is friends with Cindy, and Mike is friends with Bob," etc.)
+2. Implement the -prompt interactive command mode
+3. Add additional output formats and implement the -o <outputspec> command line switch
+4. FOAF output
+5. XML output
+6. JSON output
+7. A JDBC module so that generated records can be pumped directly into a database
+8. A GUI?
+9. Add additional data fields:  SSN, date-of-birth, place-of-birth, OpenID, username, homepage, etc.
+10. Clean up and modularize the code.  It's pretty monolithic right now.
+11. Add the ability to specify the name of the output file.
+12. Switches for more fine grained control over the generated data.  For example, the ability to get USA only or CAN only
+  addresses, or to exclude certain states, etc.
+13. ??
