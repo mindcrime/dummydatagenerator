@@ -16,4 +16,8 @@ might or might not ever happen.
 11. Add the ability to specify the name of the output file.
 12. Switches for more fine grained control over the generated data.  For example, the ability to get USA only or CAN only
   addresses, or to exclude certain states, etc.
-13. ??
+13. Add support for other countries in addresses.
+14. Include a list of real area-codes and an option to use real area codes
+15. Optimize init time by not loading data from disk that won't be used (the init routines were written before the
+   command line args were added, and default to loading all the data files)
+16. ???
