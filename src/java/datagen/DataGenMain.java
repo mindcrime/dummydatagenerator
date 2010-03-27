@@ -2,12 +2,18 @@ package datagen;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 
 import au.com.bytecode.opencsv.CSVReader;
+import au.com.bytecode.opencsv.CSVWriter;
 
 public class DataGenMain
 {
@@ -29,12 +35,127 @@ public class DataGenMain
 	protected Random streetNameRand;
 	protected Random phoneNumberRand;
 	
+	
+	private static int BAD_COMMAND_LINE = -1;
+	
+	private int numberToGenerate = 0;
+	private String outputFormat = "csv"; // TODO: make an enum for this
+	private boolean generateAddresses = false;
+	private boolean generateEmails = false;
+	private boolean generatePhoneNums = false;
+	
 	public static void main( String[] args ) throws Exception
 	{
-		DataGenMain main = new DataGenMain();
+		if( null == args || args.length < 1 )
+		{
+			printUsageInstructions();
+			System.exit( DataGenMain.BAD_COMMAND_LINE );
+		}
+		
+		Map<String, String> paramsMap = null;
+		for( String arg : args )
+		{
+			if( "-prompt".equalsIgnoreCase( arg ))
+			{
+				paramsMap = runInteractiveInterface();
+			}
+		}
+		if( null == paramsMap )
+		{
+			paramsMap = generateParamsMapFromCommandLine( args );
+		}
+		
+		DataGenMain main = new DataGenMain(paramsMap);
 		main.run();
 	}
 
+	private static void printUsageInstructions()
+	{
+		System.out.println( "java -cp <classpathspec> datagen.DataGenMain { [-prompt] -n <number> } [-o <outputspec>\n");
+		System.out.println( "-prompt: -prompt will cause the program to prompt interactively for things like 'how many records do you want?' etc." 
+							+ " All other command line arguments are ignored with -prompt" );
+		System.out.println( "-n: If -prompt is NOT specified, -n <number> is the minimum required command line.  <number> is the number of records you want to create." );
+		System.out.println( "-o: -o <outputspec> controls the output format.  Defaults to csv if not specified.  Valid options are csv and TBD");
+		System.out.println( "-address: -address is a boolean flag which, if present, turns on generation of address data.");
+		System.out.println( "-email: -email is a boolean flag which, if present, turns on generation of email addresses.");
+		System.out.println( "-phone: -phone is a boolean flag which, if present, turns on generation of phone numbers.");
+	}
+	
+	private static Map<String, String> runInteractiveInterface()
+	{
+		if( true )
+		{
+			throw new NotImplementedException( "Not implemented yet" );
+		}
+		Map<String, String> params = new HashMap<String, String>();
+		
+		return params;		
+	}
+	
+	public static Map<String, String> generateParamsMapFromCommandLine( String[] args )
+	{
+		Map<String, String> params = new HashMap<String, String>();
+		for( int i = 0; i < args.length; i++ )
+		{
+			String arg = args[i];
+			if( "-n".equalsIgnoreCase(arg) )
+			{
+				String num = args[i+1];
+				params.put( "number.to.generate", num );
+			}
+			else if( "-o".equalsIgnoreCase( arg ))
+			{
+				String outputSpec = args[i+1];
+				params.put( "output.spec", outputSpec );
+			}
+			else if( "-address".equals( arg ))
+			{
+				params.put( "generate.addresses", "true" );
+			}
+			else if( "-email".equals( arg ))
+			{
+				params.put( "generate.emails", "true" );
+			}
+			else if( "-phone".equals( arg ))
+			{
+				params.put( "generate.phones", "true" );	
+			}			
+		}
+		
+		return params;
+	}
+	
+	public DataGenMain( Map<String, String> params )
+	{
+		String numberParam = params.get( "number.to.generate" );
+		numberToGenerate = Integer.parseInt( numberParam );
+	
+		String outputSpecParam = params.get( "output.spec" );
+		if( null != outputSpecParam )
+		{
+			this.outputFormat = outputSpecParam;
+		}
+		
+		String generateAddressParam = params.get( "generate.addresses" );
+		if( null != generateAddressParam )
+		{
+			generateAddresses = Boolean.parseBoolean( generateAddressParam );
+		}
+
+		String generateEmailsParam = params.get( "generate.emails" );
+		if( null != generateEmailsParam )
+		{
+			generateEmails = Boolean.parseBoolean( generateEmailsParam );
+		}
+		
+		String generatePhonesParam = params.get( "generate.phones" );
+		if( null != generatePhonesParam )
+		{
+			generatePhoneNums = Boolean.parseBoolean( generatePhonesParam );
+		}
+		
+	}
+	
 	public void run() throws Exception
 	{
 		initializeData();
@@ -42,8 +163,8 @@ public class DataGenMain
 		
 		ArrayList<PersonData> names = new ArrayList<PersonData>(1000);
 		
-		// now generate 1000 unique data elements
-		for( int i = 0; i < 5 /*1000 */ ; i++ )
+		// now generate unique data elements
+		for( int i = 0; i < numberToGenerate; i++ )
 		{
 			String lastName = null;
 			int lastIndex = lastNamesRand.nextInt(lastNames.size()-1);
@@ -68,84 +189,127 @@ public class DataGenMain
 			elem.id = i;
 			elem.name = name;
 			
-			// TODO: add a command line argument to toggle this
-			// if( generateAddressData )
-			// {
-			boolean usa = usaOrCanada.nextBoolean();
-			ZipStateCityData zipStateCity = null;
-			if( usa )
+			if( generateAddresses )
 			{
-				int indexZipStateCity = this.zipStateCityRand.nextInt(USAZipStateCities.size()-1);
-				zipStateCity = USAZipStateCities.get( indexZipStateCity );
-			}
-			else
-			{
-				int indexZipStateCity = this.zipStateCityRand.nextInt(CNZipStateCities.size()-1);
-				zipStateCity = CNZipStateCities.get( indexZipStateCity );				
-			}
-			
-			String city = zipStateCity.city.trim();
-			if( city.contains( " " ))
-			{
-				String[] cityNameParts = city.split( " " );
-				String tempCity = "";
-				for( String part : cityNameParts )
+				boolean usa = usaOrCanada.nextBoolean();
+				ZipStateCityData zipStateCity = null;
+				if( usa )
 				{
-					tempCity += ( StringUtils.capitalize( part.toLowerCase() ) + " " );
+					int indexZipStateCity = this.zipStateCityRand.nextInt(USAZipStateCities.size()-1);
+					zipStateCity = USAZipStateCities.get( indexZipStateCity );
 				}
-			
-				city = tempCity.trim();
+				else
+				{
+					int indexZipStateCity = this.zipStateCityRand.nextInt(CNZipStateCities.size()-1);
+					zipStateCity = CNZipStateCities.get( indexZipStateCity );				
+				}
+				
+				String city = zipStateCity.city.trim();
+				if( city.contains( " " ))
+				{
+					String[] cityNameParts = city.split( " " );
+					String tempCity = "";
+					for( String part : cityNameParts )
+					{
+						tempCity += ( StringUtils.capitalize( part.toLowerCase() ) + " " );
+					}
+				
+					city = tempCity.trim();
+				}
+				else
+				{
+					city = StringUtils.capitalize( city.toLowerCase() );
+				}
+				
+				elem.city = city;
+				elem.state = zipStateCity.state;
+				elem.zip = zipStateCity.zip;
+				elem.country = zipStateCity.country;
+				
+				StringBuffer street = new StringBuffer();
+				int streetNumber = streetNumberRand.nextInt(9899) + 100;
+				street.append( String.format( "%d", streetNumber ) );
+				street.append( " " );
+				
+				int streetNameIndex = streetNameRand.nextInt( streetNames.size() -1);
+				street.append( StringUtils.capitalize( streetNames.get( streetNameIndex ).toLowerCase()) );
+				street.append( " " );
+				int streetSuffixIndex = streetNameRand.nextInt( streetSuffixes.size() -1);
+				street.append( StringUtils.capitalize( streetSuffixes.get( streetSuffixIndex ).toLowerCase() ) );
+				elem.street = street.toString();
+				
 			}
-			else
+			
+			if( generatePhoneNums )
 			{
-				city = StringUtils.capitalize( city.toLowerCase() );
+				int nAreaCode = phoneNumberRand.nextInt( 899) + 100;
+				String areaCode = String.format( "%d", nAreaCode );
+				int nPrefix = phoneNumberRand.nextInt( 899 ) + 100;
+				String prefix = String.format( "%d", nPrefix );
+				int nPhoneNumber = phoneNumberRand.nextInt( 8999 ) + 1000;
+				String phoneNumber = String.format( "%d", nPhoneNumber );
+				elem.phone = areaCode + "-" + prefix + "-" + phoneNumber;
+			
 			}
 			
-			elem.city = city;
-			elem.state = zipStateCity.state;
-			elem.zip = zipStateCity.zip;
-			elem.country = zipStateCity.country;
-			
-			StringBuffer street = new StringBuffer();
-			int streetNumber = streetNumberRand.nextInt(9899) + 100;
-			street.append( String.format( "%4d", streetNumber ) );
-			street.append( " " );
-			
-			int streetNameIndex = streetNameRand.nextInt( streetNames.size() -1);
-			street.append( StringUtils.capitalize( streetNames.get( streetNameIndex ).toLowerCase()) );
-			street.append( " " );
-			int streetSuffixIndex = streetNameRand.nextInt( streetSuffixes.size() -1);
-			street.append( StringUtils.capitalize( streetSuffixes.get( streetSuffixIndex ).toLowerCase() ) );
-			elem.street = street.toString();
-			
-			// }
-			
-			// TODO: put in a command line argument to toggle this
-			// if( generatePhoneNumbers )
-			// {
-			int nAreaCode = phoneNumberRand.nextInt( 899) + 100;
-			String areaCode = String.format( "%d", nAreaCode );
-			int nPrefix = phoneNumberRand.nextInt( 899 ) + 100;
-			String prefix = String.format( "%d", nPrefix );
-			int nPhoneNumber = phoneNumberRand.nextInt( 8999 ) + 1000;
-			String phoneNumber = String.format( "%d", nPhoneNumber );
-			elem.phone = areaCode + "-" + prefix + "-" + phoneNumber;
-			
-			// }
-			
-			// TODO: put in a command line argument to toggle this
-			// if( generateEmails )
-			// {
-			elem.email = generateRandomString() + "@example.com";
-			
-			// }
+			if( generateEmails )
+			{
+				elem.email = generateRandomString() + "@example.com";
+			}
 			
 			names.add( elem );
-			System.out.println( elem );
 		}
 		
+		exportData( names );
 		
 		System.out.println( "done" );		
+	}
+	
+	protected void exportData( List<PersonData> names ) throws Exception
+	{
+	     CSVWriter writer = new CSVWriter(new FileWriter("dummydata_out.csv") );
+	     int numOutputFields = 2;
+	     if( generateAddresses)
+	     {
+	    	 numOutputFields += 5;
+	     }
+	     if( generateEmails )
+	     {
+	    	 numOutputFields++;
+	     }
+	     if( generateEmails )
+	     {
+	    	 numOutputFields++;
+	     }
+	     
+	     
+	     for( PersonData elem : names )
+	     {
+	    	 String[] next = new String[numOutputFields];
+	    	 next[0] = Integer.toString( elem.id );
+	    	 next[1] = elem.name;
+	    	 int nextField = 2;
+	    	 if( generateAddresses)
+	    	 {
+	    		 next[nextField++] = elem.street;
+	    		 next[nextField++] = elem.city;
+	    		 next[nextField++] = elem.state;
+	    		 next[nextField++] = elem.zip;
+	    		 next[nextField++] = elem.country;
+	    	 }
+	    	 if( generateEmails )
+	    	 {
+	    		 next[nextField++] = elem.email;
+	    	 }
+	    	 if( generatePhoneNums )
+	    	 {
+	    		 next[nextField++] = elem.phone;
+	    	 }
+	    	 
+	    	 writer.writeNext( next );
+	     }
+	
+	     writer.close();
 	}
 	
 	protected void initializeRandoms()
@@ -235,7 +399,6 @@ public class DataGenMain
 	        elem.country = "CAN";
 	        
 	        CNZipStateCities.add( elem );
-	        // System.out.println( elem );
 	    }
 	    
 	}
