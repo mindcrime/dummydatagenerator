@@ -71,7 +71,7 @@ public class DataGenMain
 
 	private static void printUsageInstructions()
 	{
-		System.out.println( "java -cp <classpathspec> datagen.DataGenMain { [-prompt] -n <number> } [-o <outputspec>\n");
+		System.out.println( "java -cp <classpathspec> datagen.DataGenMain { [-prompt] -n <number> } [-o <outputspec>] [-address] [-email] [-phone]\n");
 		System.out.println( "-prompt: -prompt will cause the program to prompt interactively for things like 'how many records do you want?' etc." 
 							+ " All other command line arguments are ignored with -prompt" );
 		System.out.println( "-n: If -prompt is NOT specified, -n <number> is the minimum required command line.  <number> is the number of records you want to create." );
