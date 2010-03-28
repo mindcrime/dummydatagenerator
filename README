@@ -36,10 +36,10 @@ formats; probably including various forms of  delimited text, such as tab delimi
 delimited, etc., as well as some sort of XML format, FOAF (encoded as RDF/XML, N3 or Turtle 
 or something) and/or JSON.
 
-Ouputting social-graph "connections" is not yet supported, but will be coming shortly.
-That's the next major chunk that I need for the work I'm doing.  When it's available, it
-will probably just be in adjacency matrix form, serialized into a file, using the "id"
-parameter of the person records.
+Ouputting social-graph "connections" is now supported. If you specify -graph <num> on the
+command line, the program will generate a file named social_graph.out, which contains a list
+of randomly generated  social graph connections in adjacency matrix form, serialized into a file, 
+using the "id" parameter of the person records.
 
 The -prompt command line argument will eventually invoke an interactive interface, but
 it's not completely implemented yet, and using -prompt will result in an exception being thrown
