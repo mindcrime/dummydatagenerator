@@ -315,12 +315,14 @@ public class DataGenMain
 			if( lhs == rhs )
 			{
 				// don't bother linking a node to itself, that's either implied or irrelevant to us
+				i--;
 				continue;
 			}
 		
 			if( graph[lhs][rhs] == 1 )
 			{
 				// we already have this one...
+				i--;
 				continue;
 			}
 		
