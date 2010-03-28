@@ -1,9 +1,11 @@
 package datagen;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,15 +36,17 @@ public class DataGenMain
 	protected Random streetNumberRand;
 	protected Random streetNameRand;
 	protected Random phoneNumberRand;
-	
+	protected Random socialGraphRand;
 	
 	private static int BAD_COMMAND_LINE = -1;
 	
 	private int numberToGenerate = 0;
+	private int numConnections = 0;
 	private String outputFormat = "csv"; // TODO: make an enum for this
 	private boolean generateAddresses = false;
 	private boolean generateEmails = false;
 	private boolean generatePhoneNums = false;
+	private boolean generateSocialGraph = false;
 	
 	public static void main( String[] args ) throws Exception
 	{
@@ -71,7 +75,7 @@ public class DataGenMain
 
 	private static void printUsageInstructions()
 	{
-		System.out.println( "java -cp <classpathspec> datagen.DataGenMain { [-prompt] -n <number> } [-o <outputspec>] [-address] [-email] [-phone]\n");
+		System.out.println( "java -cp <classpathspec> datagen.DataGenMain { [-prompt] -n <number> } [-o <outputspec>] [-address] [-email] [-phone] [-graph <number of connections>]\n");
 		System.out.println( "-prompt: -prompt will cause the program to prompt interactively for things like 'how many records do you want?' etc." 
 							+ " All other command line arguments are ignored with -prompt" );
 		System.out.println( "-n: If -prompt is NOT specified, -n <number> is the minimum required command line.  <number> is the number of records you want to create." );
@@ -79,6 +83,8 @@ public class DataGenMain
 		System.out.println( "-address: -address is a boolean flag which, if present, turns on generation of address data.");
 		System.out.println( "-email: -email is a boolean flag which, if present, turns on generation of email addresses.");
 		System.out.println( "-phone: -phone is a boolean flag which, if present, turns on generation of phone numbers.");
+		System.out.println( "-graph: -graph is a boolean flag which, if present, turns on generation of social graph connections. " +
+				"The (required)argument to this parameter is the number of such connections to generate" );
 	}
 	
 	private static Map<String, String> runInteractiveInterface()
@@ -107,6 +113,11 @@ public class DataGenMain
 			{
 				String outputSpec = args[i+1];
 				params.put( "output.spec", outputSpec );
+			}
+			else if( "-graph".equalsIgnoreCase( arg ))
+			{
+				params.put(  "generate.social.graph", "true" );
+				params.put(  "number.of.connections", args[i+1]);
 			}
 			else if( "-address".equals( arg ))
 			{
@@ -153,7 +164,18 @@ public class DataGenMain
 		{
 			generatePhoneNums = Boolean.parseBoolean( generatePhonesParam );
 		}
-		
+	
+		String generateSocialGraphParam = params.get( "generate.social.graph" );
+		if( null != generateSocialGraphParam )
+		{
+			generateSocialGraph = Boolean.parseBoolean( generateSocialGraphParam );
+			
+			if( generateSocialGraph )
+			{
+				String numConnectionsParam = params.get(  "number.of.connections" );
+				numConnections = Integer.parseInt( numConnectionsParam );
+			}
+		}
 	}
 	
 	public void run() throws Exception
@@ -262,7 +284,53 @@ public class DataGenMain
 		
 		exportData( names );
 		
+		if( generateSocialGraph )
+		{
+			int[][] graph = generateSocialGraph( names, numConnections );
+			exportGraph( graph, numberToGenerate );
+		}
+		
 		System.out.println( "done" );		
+	}
+	
+	/* note: for now, this assumes that each entry in "names" has an int id, where the
+	 *  highest id corresponds to the number of nodes 
+	 *  so, if there are 512 entries, the ids are 0-511 (0 indexed so mapping into a plain old array is straightforward)
+	 */
+	protected int[][] generateSocialGraph( List<PersonData> names, int numConnections )
+	{
+		/* create an adjacencyMatrix to represent the connections */
+		int numNodes = names.size();
+		int[][] graph = new int[numNodes][numNodes];
+		for( int i = 0; i < numNodes; i++ )
+		{
+			Arrays.fill( graph[i], 0 );
+		}
+		
+		for( int i = 0; i < numConnections; i++ )
+		{
+			int lhs = socialGraphRand.nextInt(numNodes-1);
+			int rhs = socialGraphRand.nextInt(numNodes-1);
+		
+			if( lhs == rhs )
+			{
+				// don't bother linking a node to itself, that's either implied or irrelevant to us
+				continue;
+			}
+		
+			if( graph[lhs][rhs] == 1 )
+			{
+				// we already have this one...
+				continue;
+			}
+		
+			// save the link (both ways, we're undirected for now)
+			graph[lhs][rhs] = 1;
+			graph[rhs][lhs] = 1;
+		
+		}
+		
+		return graph;
 	}
 	
 	protected void exportData( List<PersonData> names ) throws Exception
@@ -312,6 +380,26 @@ public class DataGenMain
 	     writer.close();
 	}
 	
+	protected void exportGraph( int[][] graph, int numNodes ) throws Exception
+	{
+		// serialize it to disk
+		FileWriter outWriter = new FileWriter( "social_graph.out" );
+		BufferedWriter out = new BufferedWriter(outWriter);
+		out.write( numNodes + "\n" );
+		for( int i = 0; i < numNodes; i++ )
+		{
+			for( int j = 0; j < numNodes; j++ )
+			{
+				if( graph[i][j] == 1 )
+				{
+					out.write(  i + " " + j + "\n");
+				}
+			}
+		}
+		out.close();
+		outWriter.close();		
+	}
+	
 	protected void initializeRandoms()
 	{
 		maleOrFemale 		=	new Random( System.currentTimeMillis() );
@@ -323,6 +411,7 @@ public class DataGenMain
 		streetNameRand 		= 	new Random( System.currentTimeMillis() );
 		streetNumberRand 	= 	new Random( System.currentTimeMillis() );
 		phoneNumberRand 	=	new Random( System.currentTimeMillis() );
+		socialGraphRand		=	new Random( System.currentTimeMillis() );
 	}
 
 	protected void initializeData() throws Exception
