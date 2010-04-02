@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
@@ -183,7 +185,8 @@ public class DataGenMain
 		initializeData();
 		initializeRandoms();
 		
-		ArrayList<PersonData> names = new ArrayList<PersonData>(1000);
+		ArrayList<PersonData> names = new ArrayList<PersonData>(10000);
+		Set<String> userNames = new TreeSet<String>();
 		
 		// now generate unique data elements
 		for( int i = 0; i < numberToGenerate; i++ )
@@ -276,7 +279,17 @@ public class DataGenMain
 			
 			if( generateEmails )
 			{
-				elem.email = generateRandomString() + "@example.com";
+				String userPart = generateRandomString();
+				
+				/* add returns false if the value is a dupe... keep looping until
+				 * we generate a value that is unique...
+				 */
+				while( !userNames.add( userPart ) )
+				{
+					userPart = generateRandomString();
+				}
+				
+				elem.email =  userPart + "@example.com";
 			}
 			
 			names.add( elem );
@@ -390,7 +403,7 @@ public class DataGenMain
 		out.write( numNodes + "\n" );
 		for( int i = 0; i < numNodes; i++ )
 		{
-			for( int j = 0; j < numNodes; j++ )
+			for( int j = 0; j < i+1; j++ )
 			{
 				if( graph[i][j] == 1 )
 				{
